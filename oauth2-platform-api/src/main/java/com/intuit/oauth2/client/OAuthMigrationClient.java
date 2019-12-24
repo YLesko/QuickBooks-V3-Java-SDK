@@ -35,56 +35,56 @@ import com.intuit.oauth2.utils.PropertiesConfig;
 
 /**
  * Client class for OAuthMigration API
- * 
+ *
  * @author dderose
  *
  */
 public class OAuthMigrationClient {
-	
+
 
     private OAuthMigrationRequest oAuthMigrationRequest;
 
     private static final Logger logger = LoggerImpl.getInstance();
     private static final ObjectMapper mapper  = MapperImpl.getInstance();
-    
+
     public OAuthMigrationClient(OAuthMigrationRequest request) {
         this.oAuthMigrationRequest = request;
     }
-    
+
     /**
     * Hiding the default constructor as OAuth2PlatformClient is always required to function properly
     */
    protected OAuthMigrationClient() {
 
    }
-	
+
 	/**
 	 * Calls the migrate API based on the the request provided and
 	 * returns an object with oauth2 tokens
 	 *
 	 * @return
-	 * @throws ConnectionException 
+	 * @throws ConnectionException
 	 */
 	public OAuthMigrationResponse migrate() throws ConnectionException {
 
 		logger.debug("Enter OAuthMigrationClient::migrate");
-		
+
 		try {
-			
-			
+
+
 			HttpRequestClient client = new HttpRequestClient(oAuthMigrationRequest.getOauth2config().getProxyConfig());
-			
+
 			//prepare post json
 			String requestjson =  new JSONObject().put("scope", getScopeValue(oAuthMigrationRequest.getScope()))
     				.put("redirect_uri", getRedirectUrl() )
     				.put("client_id", oAuthMigrationRequest.getOauth2config().getClientId())
     				.put("client_secret",oAuthMigrationRequest.getOauth2config().getClientSecret())
     				.toString();
-			
-			Request request = new Request.RequestBuilder(MethodType.GET, getMigrationAPIUrl(oAuthMigrationRequest.getEnvironment()))
+
+			Request request = new Request.RequestBuilder(MethodType.POST, getMigrationAPIUrl(oAuthMigrationRequest.getEnvironment()))
 											.requiresAuthentication(true)
 											.postJson(requestjson)
-											.build(); 
+											.build();
 			//make the API call
 			Response response = client.makeJsonRequest(request, oAuthMigrationRequest);
 
@@ -103,20 +103,20 @@ public class OAuthMigrationClient {
 			throw new ConnectionException(ex.getMessage(), ex);
 		}
 	}
-	
-	
+
+
 	private static String getMigrationAPIUrl(Environment environment) {
-		return PropertiesConfig.getInstance().getProperty("OAUTH_MIGRATION_URL_" + environment.value()); 
+		return PropertiesConfig.getInstance().getProperty("OAUTH_MIGRATION_URL_" + environment.value());
 	}
-	
+
 	public String getScopeValue(Scope scope)  {
 		return PropertiesConfig.getInstance().getProperty(scope.value());
 	}
-	
+
 	public String getRedirectUrl()  {
-		String url = PropertiesConfig.getInstance().getProperty("REDIRECT_URL"); 
+		String url = PropertiesConfig.getInstance().getProperty("REDIRECT_URL");
 		return (oAuthMigrationRequest.getRedirectUri() == null || oAuthMigrationRequest.getRedirectUri().isEmpty()) ? url: oAuthMigrationRequest.getRedirectUri();
 	}
-	
+
 
 }
